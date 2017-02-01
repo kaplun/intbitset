@@ -1,39 +1,43 @@
 # -*- coding: utf-8 -*-
-##
-## This file is part of intbitset
-## Copyright (C) 2013 CERN.
-##
-## intbitset is free software; you can redistribute it and/or
-## modify it under the terms of the GNU General Public License as
-## published by the Free Software Foundation; either version 2 of the
-## License, or (at your option) any later version.
-##
-## intbitset is distributed in the hope that it will be useful, but
-## WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-## General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with intbitset; if not, write to the Free Software Foundation,
-## Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
-##
-## In applying this licence, CERN does not waive the privileges and immunities
-## granted to it by virtue of its status as an Intergovernmental Organization
-## or submit itself to any jurisdiction.
+#
+# This file is part of intbitset
+# Copyright (C) 2013, 2014, 2015, 2016 CERN.
+#
+# intbitset is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 3 of the
+# License, or (at your option) any later version.
+#
+# intbitset is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with intbitset; if not, write to the Free Software Foundation,
+# Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+#
+# In applying this licence, CERN does not waive the privileges and immunities
+# granted to it by virtue of its status as an Intergovernmental Organization
+# or submit itself to any jurisdiction.
+
+sudo: false
 
 language: python
 
 python:
-  - "2.6"
   - "2.7"
+  - "3.5"
+  - "3.6"
 
 install:
-  - pip install --upgrade pip --use-mirrors
-  - pip install cython nose --use-mirrors
-  - pip install coveralls --use-mirrors
+  - pip install --upgrade pip
+  - pip install cython nose check-manifest
+  - pip install coveralls
   - pip install .
 
 script:
+  - check-manifest
   - coverage run --source=intbitset setup.py test
 
 after_success:
@@ -41,3 +45,12 @@ after_success:
 
 notifications:
   email: false
+
+deploy:
+  provider: pypi
+  user: samuele.kaplun
+  password:
+    secure: gNwbGQxvADImaBsqgyQG0Vc5o6+KtQUnLkZXmWmOgnieqD0NwCqTg4uvKWuihIzCIzcZf4wEx8Sv1qCfadfl1LPo0dp1GAA0c70Gcs2IaTxo8uULG33fgL0TF8Y78oDIl0R1YNfuyiDtI7dYC/HiuXuom7EMQ1ImKGDN+tGz6ag=
+  on:
+    tags: true
+    repo: inveniosoftware/intbitset

@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
-##
-## This file is part of intbitset.
-## Copyright (C) 2007, 2008, 2009, 2010, 2011, 2013 CERN.
-##
-## intbitset is free software; you can redistribute it and/or
-## modify it under the terms of the GNU General Public License as
-## published by the Free Software Foundation; either version 2 of the
-## License, or (at your option) any later version.
-##
-## intbitset is distributed in the hope that it will be useful, but
-## WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-## General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with intbitset; if not, write to the Free Software Foundation, Inc.,
-## 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+#
+# This file is part of intbitset.
+# Copyright (C) 2007, 2008, 2009, 2010, 2011, 2013, 2014, 2015, 2016 CERN.
+#
+# intbitset is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 3 of the
+# License, or (at your option) any later version.
+#
+# intbitset is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with intbitset; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 """Unit tests for the intbitset data structure."""
 
@@ -24,23 +24,26 @@ __revision__ = "$Id$"
 
 import sys
 import zlib
+import six
 import re
 import pkg_resources
 import unittest
 
-if sys.hexversion < 0x2040000:
-    # pylint: disable=W0622
-    from sets import Set as set
-    # pylint: enable=W0622
-
-
 class IntbitsetTest(unittest.TestCase):
     """Test functions related to intbitset data structure."""
+
+    if sys.version_info < (2, 7):
+        def assertIn(self, test_value, expected_set, msg=None):
+            if msg is None:
+                msg = "%s did not occur in %s" % (test_value, expected_set)
+            self.assert_(test_value in expected_set, msg)
+
     def setUp(self):
         from intbitset import intbitset
         self.intbitset = intbitset
 
-        CFG_INTBITSET_BIG_EXAMPLE = open('tests/intbitset_example.int').read()
+        with open('tests/intbitset_example.int', 'rb') as f:
+            CFG_INTBITSET_BIG_EXAMPLE = f.read()
 
         self.sets = [
             [1024],
@@ -54,7 +57,7 @@ class IntbitsetTest(unittest.TestCase):
             [10000],
             [23, 45, 67, 89, 110, 130, 174, 1002, 2132, 23434],
             [700, 2000],
-            range(1000, 1100),
+            list(range(1000, 1100)),
             [30], [31], [32], [33],
             [62], [63], [64], [65],
             [126], [127], [128], [129]
@@ -82,9 +85,9 @@ class IntbitsetTest(unittest.TestCase):
         self.big_examples = [list(self.intbitset(CFG_INTBITSET_BIG_EXAMPLE))]
 
         self.corrupted_strdumps = [
-            "ciao",
-            self.intbitset([2, 6000000]).strbits(),
-            "djflsdkfjsdljfsldkfjsldjlfk",
+            six.b("ciao"),
+            six.b(self.intbitset([2, 6000000]).strbits()),
+            six.b("djflsdkfjsdljfsldkfjsldjlfk"),
         ]
 
     def tearDown(self):
@@ -97,13 +100,13 @@ class IntbitsetTest(unittest.TestCase):
         allocated1 = intbitset1.get_allocated()
         creator_list = intbitset1.extract_finite_list()
         up_to1 = creator_list and max(creator_list) or -1
-        self.failUnless(up_to1 <= size1 * wordbitsize < allocated1 * wordbitsize, "up_to1=%s, size1=%s, allocated1=%s while testing %s during %s" % (up_to1, size1 * wordbitsize, allocated1 * wordbitsize, intbitset1, msg))
+        self.assertTrue(up_to1 <= size1 * wordbitsize < allocated1 * wordbitsize, "up_to1=%s, size1=%s, allocated1=%s while testing %s during %s" % (up_to1, size1 * wordbitsize, allocated1 * wordbitsize, intbitset1, msg))
         tmp = self.intbitset(intbitset1.fastdump())
         size2 = tmp.get_size()
         allocated2 = tmp.get_allocated()
         creator_list = tmp.extract_finite_list()
         up_to2 = creator_list and max(creator_list) or -1
-        self.failUnless(up_to2 <= size2 * wordbitsize < allocated2 * wordbitsize, "After serialization up_to2=%s, size2=%s, allocated2=%s while testing %s during %s" % (up_to2, size2 * wordbitsize, allocated2 * wordbitsize, intbitset1, msg))
+        self.assertTrue(up_to2 <= size2 * wordbitsize < allocated2 * wordbitsize, "After serialization up_to2=%s, size2=%s, allocated2=%s while testing %s during %s" % (up_to2, size2 * wordbitsize, allocated2 * wordbitsize, intbitset1, msg))
 
 
     def _helper_test_via_fncs_list(self, fncs, intbitset1, intbitset2):
@@ -176,6 +179,7 @@ class IntbitsetTest(unittest.TestCase):
         for intbitset_fnc, set_fnc, dummy, dummy in self.fncs_list:
             self.assertRaises(TypeError, intbitset_fnc, (self.intbitset([1,2,3]), set([1,2,3])))
             self.assertRaises(TypeError, set_fnc, (set([1,2,3]), self.intbitset([1,2,3])))
+            self.assertRaises(TypeError, intbitset_fnc, (None, self.intbitset([1,2,3])))
 
     def test_set_intersection(self):
         """intbitset - set intersection, normal set"""
@@ -317,9 +321,9 @@ class IntbitsetTest(unittest.TestCase):
             count = 0
             for bit in self.intbitset(set1).strbits():
                 if bit == '0':
-                    self.failIf(count in set1)
+                    self.assertFalse(count in set1)
                 elif bit == '1':
-                    self.failIf(count not in set1)
+                    self.assertFalse(count not in set1)
                     tot += 1
                 else:
                     self.fail()
@@ -338,13 +342,13 @@ class IntbitsetTest(unittest.TestCase):
     def test_marshalling(self):
         """intbitset - marshalling"""
         for set1 in self.sets + [[]]:
-            self.assertEqual(self.intbitset(set1), self.intbitset().fastload((self.intbitset(set1).fastdump())))
+            self.assertEqual(self.intbitset(set1), self.intbitset(self.intbitset(set1).fastdump()))
         for set1 in self.sets + [[]]:
-            self.assertEqual(self.intbitset(set1, trailing_bits=True), self.intbitset().fastload(self.intbitset(set1, trailing_bits=True).fastdump()))
+            self.assertEqual(self.intbitset(set1, trailing_bits=True), self.intbitset(self.intbitset(set1, trailing_bits=True).fastdump()))
 
     def test_pickling(self):
         """intbitset - pickling"""
-        import cPickle
+        from six.moves import cPickle
         for set1 in self.sets + [[]]:
             self.assertEqual(self.intbitset(set1), cPickle.loads(cPickle.dumps(self.intbitset(set1), -1)))
         for set1 in self.sets + [[]]:
@@ -405,12 +409,12 @@ class IntbitsetTest(unittest.TestCase):
         for set1 in self.sets + [[]]:
             intbitset1 = self.intbitset(set1)
             intbitset1.update_with_signs(dict1)
-            up_to = max(dict1.keys() + set1)
-            for i in xrange(up_to + 1):
+            up_to = max(list(dict1.keys()) + set1)
+            for i in range(up_to + 1):
                 if dict1.get(i, i in set1 and 1 or -1) == 1:
-                    self.failUnless(i in intbitset1, "%s was not correctly updated from %s by %s" % (repr(intbitset1), repr(set1), repr(dict1)))
+                    self.assertIn(i, intbitset1, "%s was not correctly updated from %s by %s" % (repr(intbitset1), repr(set1), repr(dict1)))
                 else:
-                    self.failIf(i in intbitset1, "%s was not correctly updated from %s by %s" % (repr(intbitset1), repr(set1), repr(dict1)))
+                    self.assertFalse(i in intbitset1, "%s was not correctly updated from %s by %s" % (repr(intbitset1), repr(set1), repr(dict1)))
 
     def test_set_cloning(self):
         """intbitset - set cloning"""
@@ -456,7 +460,7 @@ class IntbitsetTest(unittest.TestCase):
         for set1 in self.sets + [[]]:
             intbitset1 = self.intbitset(set1)
             pythonlist1 = list(set1)
-            for i in xrange(-2 * len(set1) - 2, 2 * len(set1) + 2):
+            for i in range(-2 * len(set1) - 2, 2 * len(set1) + 2):
                 try:
                     res1 = pythonlist1[i]
                 except IndexError:
@@ -468,9 +472,9 @@ class IntbitsetTest(unittest.TestCase):
         for set1 in self.sets + [[]]:
             intbitset1 = self.intbitset(set1)
             pythonlist1 = list(set1)
-            for start in xrange(-2 * len(set1) - 2, 2 * len(set1) + 2):
-                for stop in xrange(-2 * len(set1) - 2, 2 * len(set1) + 2):
-                    for step in xrange(1, 3):
+            for start in range(-2 * len(set1) - 2, 2 * len(set1) + 2):
+                for stop in range(-2 * len(set1) - 2, 2 * len(set1) + 2):
+                    for step in range(1, 3):
                         res1 = pythonlist1[start:stop:step]
                         res2 = intbitset1[start:stop:step]
                         self.assertEqual(res1, list(res2), "Failure with set %s, start %s, stop %s, step %s, found %s, expected %s, indices: %s" % (set1, start, stop, step, list(res2), res1, slice(start, stop, step).indices(len(pythonlist1))))
@@ -512,18 +516,18 @@ class IntbitsetTest(unittest.TestCase):
         tests = (
             (
                 (20, 30, 1000, 40),
-                'x\x9cc`\x10p``d\x18\x18\x80d/\x00*\xb6\x00S',
-                'x\x9cc`\x10p`\x18(\xf0\x1f\x01\x00k\xe6\x0bF'
+                six.b('x\x9cc`\x10p``d\x18\x18\x80d/\x00*\xb6\x00S'),
+                six.b('x\x9cc`\x10p`\x18(\xf0\x1f\x01\x00k\xe6\x0bF')
             ),
             (
                 (20, 30, 1000, 41),
-                'x\x9cc`\x10p``b\x18\x18\xc0\x88`\x02\x00+9\x00T',
-                'x\x9cc`\x10p`\x18(\xf0\x1f\x01\x00k\xe6\x0bF'
+                six.b('x\x9cc`\x10p``b\x18\x18\xc0\x88`\x02\x00+9\x00T'),
+                six.b('x\x9cc`\x10p`\x18(\xf0\x1f\x01\x00k\xe6\x0bF')
             ),
             (
                 (20, 30, 1001, 41),
-                'x\x9cc`\x10p``b\x18\x18\x80d/\x00+D\x00U',
-                'x\x9cc`\x10p`\x18(\xf0\xef?\x1c\x00\x00k\xdb\x0bE'
+                six.b('x\x9cc`\x10p``b\x18\x18\x80d/\x00+D\x00U'),
+                six.b('x\x9cc`\x10p`\x18(\xf0\xef?\x1c\x00\x00k\xdb\x0bE')
             )
         )
         for original, dumped, dumped_trails in tests:

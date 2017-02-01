@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of intbitset
-# Copyright (C) 2013, 2015, 2016 CERN.
+# Copyright (C) 2015, 2016 CERN.
 #
 # intbitset is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License as
@@ -21,26 +21,9 @@
 # granted to it by virtue of its status as an Intergovernmental Organization
 # or submit itself to any jurisdiction.
 
-include *.rst
-include *.sh
-include *.yml
-include .coveragerc
-include .dockerignore
-include docs/requirements.txt
-include LICENSE
-include Dockerfile
-include tox.ini
+"""Version information for intbitset."""
 
-recursive-include docs *.py
-recursive-include docs *.rst
-recursive-include docs Makefile
-recursive-include docs/_themes *.css *.css_t *.conf *.html COPYING README
-recursive-include docs/_templates *.html
+# Do not change the format of this next line. Doing so risks breaking
+# setup.py and docs/conf.py
 
-recursive-include intbitset *.c
-recursive-include intbitset *.h
-recursive-include intbitset *.py
-recursive-include intbitset *.pyx
-
-recursive-include tests *.int
-recursive-include tests *.py
+__version__ = "2.3.1.dev20160630"
